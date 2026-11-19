@@ -1,0 +1,17 @@
+#Python
+__pycache__/
+pyproject.toml
+.venv/
+
+#Mac_OS
+.DS_Store
+
+#Ignore Files, But Not Test Files
+files/*
+!test*
+
+#Ignore The Database
+*.db
+
+#Ignore Settings Folder
+.parkbanking/
