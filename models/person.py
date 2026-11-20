@@ -1,12 +1,17 @@
 class Person:
 
     def __init__(
-        self, name: str, aliases: set[str] | None = None, id: int | None = None
+        self,
+        name: str,
+        aliases: set[str] | None = None,
+        phone_number: str = "",
+        email: str = "",
+        id: int | None = None,
     ):
 
         self.name = name
-        self.phone = None
-        self.email = None
+        self.phone_number = phone_number
+        self.email = email
 
         if aliases is None:
 

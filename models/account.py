@@ -13,6 +13,7 @@ class Account:
         primary: Person,
         secondary: Person | None = None,
         active: bool = True,
+        id: int | None = None,
     ):
 
         self.site = site
@@ -21,6 +22,8 @@ class Account:
         self.secondary = secondary
         self.history = set()
         self.aliases = {}
+        self.active = active
+        self.id = id
 
     def find_aliases(self):
         self.alaises = {str(self.site.site_number): "Site Number"}
