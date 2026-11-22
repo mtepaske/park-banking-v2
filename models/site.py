@@ -13,14 +13,12 @@ class Site:
         cabin: bool = True,
         ac: bool = True,
         sewer: bool = True,
-        id: int | None = None,
     ):
 
         self.site_number = site_number
         self.cabin = cabin
         self.ac = ac
         self.sewer = sewer
-        self.id = id
 
     def calc_annual_fees(self) -> Decimal:
         return BASE_RATE + int(self.ac) * AC_RATE + int(self.sewer) * SEWER_RATE

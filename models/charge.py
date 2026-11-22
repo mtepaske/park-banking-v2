@@ -17,9 +17,15 @@ PARTICULARS = Literal["u", "m", "dd", "cc", "ca", "af", "bp", "eg", "c"]
 class Charge:
 
     def __init__(
-        self, date: date, amount: Decimal, details: str, particulars: PARTICULARS = "u"
+        self,
+        date: date,
+        amount: Decimal,
+        details: str,
+        particulars: PARTICULARS = "u",
+        id: int | None = None,
     ):
 
+        self.id = id
         self.date = date
         self.amount = amount
         self.details = details

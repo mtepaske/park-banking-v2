@@ -2,11 +2,10 @@ import sqlite3
 from decimal import Decimal
 
 from models.account import Account
-from models.balance import Balance
 from models.charge import Charge
 from models.person import Person
 from models.site import Site
-from services.date import get_date_from_str
+from services.date import get_date_from_str, get_str_from_date
 from services.settings import APP_DIRECTORY, get_setting
 
 db_folder = APP_DIRECTORY / get_setting("db_path")
@@ -55,10 +54,12 @@ def initialise_database(connection: sqlite3.Connection) -> None:
             CREATE TABLE IF NOT EXISTS accounts (
             id INTEGER PRIMARY KEY,
             site_id INTEGER NOT NULL,
-            balance_id INTEGER NOT NULL,
             primary_id INTEGER NOT NULL,
             secondary_id INTEGER,
-            active INTEGER NOT NULL DEFAULT 1
+            active INTEGER NOT NULL DEFAULT 1,
+            FOREIGN KEY (primary_id) REFERENCES people(id),
+            FOREIGN KEY (secondary_id) REFERENCES people(id),
+            FOREIGN KEY (site_id) REFERENCES sites(site_number)
             )
         """)
 
@@ -73,30 +74,21 @@ def initialise_database(connection: sqlite3.Connection) -> None:
         # Sites table
         connection.execute("""
             CREATE TABLE IF NOT EXISTS sites (
-            id INTEGER PRIMARY KEY,
-            site_number INTEGER NOT NULL,
+            site_number INTEGER PRIMARY KEY,
             cabin INTEGER NOT NULL,
             ac INTEGER NOT NULL, 
             sewer INTEGER NOT NULL
             )
         """)
 
-        # Balance table
-        connection.execute("""
-            CREATE TABLE IF NOT EXISTS balances (
-            id INTEGER PRIMARY KEY,
-            balance REAL NOT NULL
-            )
-        """)
-
         # Persons table
         connection.execute("""
-            CREATE TABLE IF NOT EXISTS persons (
+            CREATE TABLE IF NOT EXISTS people (
             id INTEGER PRIMARY KEY,
             name TEXT NOT NULL,
             aliases TEXT NOT NULL,
             phone TEXT NOT NULL,
-            email TEXT NOT NULL,
+            email TEXT NOT NULL
             )
         """)
 
@@ -107,8 +99,9 @@ def initialise_database(connection: sqlite3.Connection) -> None:
             account_id INTEGER NOT NULL,
             date TEXT NOT NULL,
             amount REAL NOT NULL,
-            detials TEXT NOT NULL,
-            particulars TEXT NOT NULL
+            details TEXT NOT NULL,
+            particulars TEXT NOT NULL,
+            FOREIGN KEY (account_id) REFERENCES accounts(id)
             )
         """)
 
@@ -116,7 +109,7 @@ def initialise_database(connection: sqlite3.Connection) -> None:
         connection.execute("""
             CREATE TABLE IF NOT EXISTS ignore (
             id INTEGER PRIMARY KEY,
-            word TEXT NOT NULL
+            word TEXT NOT NULL UNIQUE
             )
         """)
 
@@ -144,61 +137,51 @@ class Repository:
 
             id = account["id"]
             site = self.load_site(account["site_id"])
-            balance = self.load_balance(
-                account["balance_id"], annual_fee=site.calc_annual_fees()
-            )
             primary = self.load_person(account["primary_id"])
             secondary = self.load_person(account["secondary_id"])
-            active = account["active"]
             history = self.load_history(id)
+            active = account["active"]
+
+            assert primary is not None
 
             accounts.append(
                 Account(
                     id=id,
                     site=site,
-                    balance=balance,
                     primary=primary,
                     secondary=secondary,
-                    active=active,
+                    history=history,
+                    active=bool(active),
                 )
             )
-            account.hiostory = history
 
         return accounts
 
-    def load_balance(self, id: int, annual_fee: Decimal) -> Balance:
-        _, balance = self.execute(
-            """
-            SELECT *
-            FROM balances
-            WHERE id = ?
-            """,
-            (id,),
-        ).fetchone()
-        return Balance(id=id, balance=balance, annual_fees=annual_fee)
-
     def load_site(self, id: int) -> Site:
-        _, site_number, cabin, ac, sewer = self.execute(
+        _, cabin, ac, sewer = self.execute(
             """
             SELECT *
             FROM sites
-            WHERE id = ?
+            WHERE site_number = ?
             """,
             (id,),
         ).fetchone()
         return Site(
-            id=id,
-            site_number=site_number,
+            site_number=id,
             cabin=bool(cabin),
             ac=bool(ac),
             sewer=bool(sewer),
         )
 
-    def load_person(self, id: int) -> Person:
+    def load_person(self, id: int | None) -> Person | None:
+
+        if id is None:
+            return None
+
         _, name, aliases, phone, email = self.execute(
             """
             SELECT *
-            FROM persons
+            FROM people
             WHERE id = ?
             """,
             (id,),
@@ -215,17 +198,18 @@ class Repository:
         history_rows = self.execute(
             """
             SELECT *
-            FROM history
+            FROM charges
             WHERE account_id = ?
         """,
             (account_id,),
-        )
+        ).fetchall()
         return {
             Charge(
                 date=get_date_from_str(row["date"]),
                 amount=Decimal(row["amount"]),
                 details=row["details"],
                 particulars=row["particulars"],
+                id=row["id"],
             )
             for row in history_rows
         }
@@ -253,7 +237,6 @@ class Repository:
     def _save_account(self, account: Account):
 
         site_id = self._save_site(account.site)
-        balance_id = self._save_balance(account.balance)
         primary_id = self._save_person(account.primary)
         secondary_id = self._save_person(account.secondary)
 
@@ -261,17 +244,15 @@ class Repository:
             cursor = self.execute(
                 """
                 INSERT INTO accounts (
-                site_id = ?,
-                balance_id = ?,
-                primary_id = ?,
-                secondary_id = ?,
-                active = ?
+                site_id,
+                primary_id,
+                secondary_id,
+                active
                 ) 
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?)
                 """,
                 (
                     site_id,
-                    balance_id,
                     primary_id,
                     secondary_id,
                     int(account.active),
@@ -279,6 +260,7 @@ class Repository:
             )
 
             account.id = cursor.lastrowid
+            self._save_history(account)
 
             return True
 
@@ -287,101 +269,60 @@ class Repository:
                 """
                 UPDATE accounts
                 SET site_id = ?,
-                balance_id = ?,
                 primary_id = ?,
                 secondary_id = ?,
                 active = ?
                 WHERE id = ?
             """,
-                (site_id, balance_id, primary_id, secondary_id, int(account.active)),
+                (site_id, primary_id, secondary_id, int(account.active), account.id),
             )
+            self._save_history(account)
 
             return False
 
     def _save_site(self, site: Site) -> int:
-
-        if site.id is None:
-            cursor = self.execute(
-                """
-                INSERT INTO sites (
-                site_number = ?,
-                cabin = ?,
-                ac = ?,
-                sewer = ?,
-                )
-            """,
-                (site.site_number, int(site.cabin), int(site.ac), int(site.sewer)),
+        self.execute(
+            """
+            INSERT INTO sites (
+            site_number,
+            cabin,
+            ac,
+            sewer
             )
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(site_number)
+            DO UPDATE SET
+            cabin = excluded.cabin,
+            ac = excluded.ac,
+            sewer = excluded.sewer
+        """,
+            (site.site_number, site.cabin, site.ac, site.sewer),
+        )
 
-            site.id = cursor.lastrowid
-            assert site.id is not None
-            return site.id
+        return site.site_number
 
-        else:
-            cursor = self.execute(
-                """
-                UPDATE sites
-                SET site_number = ?,
-                cabin = ?,
-                ac = ?,
-                sewer = ?,
-                WHERE id = ?
-            """,
-                (
-                    site.site_number,
-                    int(site.cabin),
-                    int(site.ac),
-                    int(site.sewer),
-                    int(site.id),
-                ),
-            )
-
-            return site.id
-
-    def _save_balance(self, balance: Balance) -> int:
-
-        if balance.id is None:
-            cursor = self.execute(
-                """
-                INSERT INTO balances (
-                balance = ?
-                )
-            """,
-                (balance.balance,),
-            )
-            balance.id = cursor.lastrowid
-
-            assert balance.id is not None
-            return balance.id
-
-        else:
-            cursor = self.execute(
-                """
-                UPDATE balances
-                SET balance = ?
-                WHERE id = ?
-            """,
-                (balance.balance, balance.id),
-            )
-
-            return balance.id
-
-    def _save_person(self, person: Person | None) -> int:
+    def _save_person(self, person: Person | None) -> int | None:
 
         if person is None:
-            return 0
+            return None
 
         if person.id is None:
             cursor = self.execute(
                 """
-                INSERT INTO persons (
-                name = ?,
-                aliases = ?,
-                phone = ?,
-                email = ?
+                INSERT INTO people (
+                name,
+                aliases,
+                phone,
+                email
                 )
+                VALUES (?, ?, ?, ?)
             """,
-                (person.name, person.aliases, person.phone_number, person.email),
+                (
+                    person.name,
+                    ",".join(person.aliases),
+                    person.phone_number,
+                    person.email,
+                ),
             )
             person.id = cursor.lastrowid
 
@@ -390,9 +331,9 @@ class Repository:
 
         else:
 
-            cursor = self.execute(
+            self.execute(
                 """
-                UPDATE persons
+                UPDATE people
                 SET name = ?,
                 aliases = ?,
                 phone = ?,
@@ -408,6 +349,53 @@ class Repository:
                 ),
             )
             return person.id
+
+    def _save_history(self, account: Account) -> None:
+        assert account.id is not None
+        for charge in account.history:
+            if charge.id is None:
+                cursor = self.execute(
+                    """
+                    INSERT INTO charges (
+                    account_id,
+                    date,
+                    amount,
+                    details,
+                    particulars
+                    )
+                    VALUES (?, ?, ?, ?, ?)
+                """,
+                    (
+                        account.id,
+                        get_str_from_date(charge.date),
+                        str(charge.amount),
+                        charge.details,
+                        charge.particulars,
+                    ),
+                )
+                charge.id = cursor.lastrowid
+
+            else:
+
+                self.execute(
+                    """
+                    UPDATE charges
+                    SET account_id = ?,
+                    date = ?,
+                    amount = ?,
+                    details = ?,
+                    particulars = ?
+                    WHERE id = ?
+                """,
+                    (
+                        account.id,
+                        get_str_from_date(charge.date),
+                        str(charge.amount),
+                        charge.details,
+                        charge.particulars,
+                        charge.id,
+                    ),
+                )
 
     def save_ignore(self, words_to_ignore: set[str]) -> None:
         pass

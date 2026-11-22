@@ -24,3 +24,7 @@ def get_date_from_str(date: str) -> date:
         )
 
     return parsed_date
+
+
+def get_str_from_date(date: date) -> str:
+    return date.strftime("%Y-%m-%d")

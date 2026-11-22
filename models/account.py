@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from models.balance import Balance
 from models.charge import Charge
 from models.person import Person
@@ -9,21 +11,32 @@ class Account:
     def __init__(
         self,
         site: Site,
-        balance: Balance,
         primary: Person,
         secondary: Person | None = None,
+        history: set[Charge] | None = None,
         active: bool = True,
         id: int | None = None,
     ):
 
         self.site = site
-        self.balance = balance
         self.primary = primary
         self.secondary = secondary
-        self.history = set()
         self.aliases = {}
         self.active = active
         self.id = id
+
+        if history is None:
+            history = set()
+        self.history = history
+
+        balance = Decimal(0)
+        for charge in self.history:
+            balance += charge.amount
+        self.balance = Balance(balance, self.site.calc_annual_fees())
+
+    @property
+    def total(self) -> Decimal:
+        return self.balance.balance
 
     def find_aliases(self):
         self.alaises = {str(self.site.site_number): "Site Number"}

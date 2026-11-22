@@ -5,7 +5,7 @@ from models.charge import Charge
 
 class Balance:
 
-    def __init__(self, balance: Decimal, annual_fees: Decimal, id: int | None = None):
+    def __init__(self, balance: Decimal, annual_fees: Decimal):
 
         self.remaining = Decimal(0)
         self.outstanding = Decimal(0)
@@ -21,8 +21,6 @@ class Balance:
         elif balance > self.annual_fees:
             self.remaining = annual_fees
             self.outstanding = balance - annual_fees
-
-        self.id = id
 
     @property
     def balance(self) -> Decimal:
