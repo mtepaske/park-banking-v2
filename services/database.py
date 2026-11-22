@@ -7,6 +7,10 @@ from models.charge import Charge
 from models.person import Person
 from models.site import Site
 from services.date import get_date_from_str
+from services.settings import APP_DIRECTORY, get_setting
+
+db_folder = APP_DIRECTORY / get_setting("db_path")
+db_folder.mkdir(parents=True, exist_ok=True)
 
 
 def connect() -> sqlite3.Connection:
@@ -17,7 +21,7 @@ def connect() -> sqlite3.Connection:
         The database connection
     """
 
-    db_path = "database.db"
+    db_path = db_folder / "database.db"
     connection = sqlite3.connect(db_path)
     connection.execute("PRAGMA foreign_keys = ON")
     connection.row_factory = sqlite3.Row
