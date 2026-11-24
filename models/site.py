@@ -33,3 +33,11 @@ class Site:
 
     def calc_annual_fees(self) -> Decimal:
         return BASE_RATE + int(self.ac) * AC_RATE + int(self.sewer) * SEWER_RATE
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "Site Number": str(self.site_number),
+            "Cabin": str(int(self.cabin)),
+            "AC": str(int(self.ac)),
+            "Sewer": str(int(self.sewer)),
+        }

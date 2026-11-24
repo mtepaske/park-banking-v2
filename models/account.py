@@ -122,3 +122,40 @@ class Account:
 
         else:
             self.balance.add_fee(charge)
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "ID": str(self.id),
+            "Site Number": str(self.site.site_number),
+            "Primary Site Holder": self.primary.name,
+            "Secondary Site Holder": (
+                self.secondary.name if self.secondary is not None else "None"
+            ),
+            "Annual Fees": str(self.balance.annual_fees),
+            "Remianing From This Fincial Year": str(self.balance.remaining),
+            "Outstanding From Previous Fincial Years": str(self.balance.outstanding),
+            "Credit": str(self.balance.credit),
+            "Total Balance": str(self.balance.balance),
+            "Active": str(int(self.active)),
+            "Primary ID": str(self.primary.id),
+            "Primary Aliases": ",".join(self.primary.aliases),
+            "Primary Phone Number": self.primary.phone_number,
+            "Primary Email": self.primary.email,
+            "Secondary ID": (
+                str(self.secondary.id) if self.secondary is not None else "None"
+            ),
+            "Secondary Aliases": (
+                ",".join(self.secondary.aliases)
+                if self.secondary is not None
+                else "None"
+            ),
+            "Secondary Phone Number": (
+                self.secondary.phone_number if self.secondary is not None else "None"
+            ),
+            "Secondary Email": (
+                self.secondary.email if self.secondary is not None else "None"
+            ),
+            "Cabin": str(int(self.site.cabin)),
+            "AC": str(int(self.site.ac)),
+            "Sewer": str(int(self.site.sewer)),
+        }
