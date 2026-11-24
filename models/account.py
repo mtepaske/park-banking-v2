@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 from decimal import Decimal
 
 from models.balance import Balance
 from models.charge import Charge
 from models.person import Person
 from models.site import Site
+from services.date import start_of_fy
 
 
 class Account:
@@ -37,6 +40,56 @@ class Account:
     @property
     def total(self) -> Decimal:
         return self.balance.balance
+
+    @classmethod
+    def from_csv(cls, row: dict[str, str]) -> Account:
+        site = Site(
+            site_number=int(row["Site Number"]),
+            cabin=bool(int(row["Cabin"])),
+            ac=bool(int(row["AC"])),
+            sewer=bool(int(row["Sewer"])),
+        )
+        primary = Person(
+            name=row["Primary Site Holder"],
+            aliases={alias for alias in row["Primary Aliases"].split(",")},
+            phone_number=row["Primary Phone Number"],
+            email=row["Primary Email"],
+            id=int(row["Primary ID"]),
+        )
+        if row["Secondary Site Holder"] != "":
+            secondary = Person(
+                name=row["Secondary Site Holder"],
+                aliases={alias for alias in row["Secondary Aliases"].split(",")},
+                phone_number=row["Secondary Phone Number"],
+                email=row["Secondary Email"],
+                id=int(row["Secondary ID"]),
+            )
+        else:
+            secondary = None
+        active = bool(int(row["Active"]))
+        id = int(row["ID"])
+        history = {
+            Charge(
+                date=start_of_fy(),
+                amount=Decimal(row["Total Balance"]) - Decimal(row["Annual Fees"]),
+                details="Generated Charge",
+                particulars="bf",
+            ),
+            Charge(
+                date=start_of_fy(),
+                amount=Decimal(row["Annual Fees"]),
+                details="Generated Charge",
+                particulars="af",
+            ),
+        }
+        return Account(
+            site=site,
+            primary=primary,
+            secondary=secondary,
+            history=history,
+            active=active,
+            id=id,
+        )
 
     def find_aliases(self):
         self.alaises = {str(self.site.site_number): "Site Number"}

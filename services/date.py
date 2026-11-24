@@ -3,6 +3,57 @@ from datetime import datetime as dt
 from zoneinfo import ZoneInfo
 
 
+def get_today() -> date:
+    """
+    Gets todays date
+
+    Returns:
+        Todays date
+    """
+
+    return dt.now(ZoneInfo("Australia/Melbourne")).date()
+
+
+def start_of_fy(day: date | None = None) -> date:
+    """
+    Finds the start of the fincial year
+
+    Args:
+        day: The date
+
+    Returns:
+        The start of the FY
+    """
+
+    if day is None:
+        day = get_today()
+
+    if day.month >= 7:
+        return date(day.year, 7, 1)
+    else:
+        return date(day.year - 1, 7, 1)
+
+
+def end_of_fy(day: date | None = None) -> date:
+    """
+    Finds the end of the fincial year
+
+    Args:
+        day: The date
+
+    Returns:
+        The end of the FY
+    """
+
+    if day is None:
+        day = get_today()
+
+    if day.month >= 7:
+        return date(day.year + 1, 6, 30)
+    else:
+        return date(day.year, 6, 30)
+
+
 def get_date_from_str(date: str) -> date:
     """
     Converts from a string to a date
