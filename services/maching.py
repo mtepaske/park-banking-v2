@@ -4,7 +4,7 @@ from models.charge import Charge
 
 class Matcher:
 
-    def __init__(self, accounts: list[Account], ignore: set[str]):
+    def __init__(self, accounts: set[Account], ignore: set[str]) -> None:
         self.accounts = accounts
         self.ignore = ignore
         self.unknown = set()

@@ -125,13 +125,13 @@ class Repository:
     def executemany(self, query: str, parameters: list[tuple]) -> sqlite3.Cursor:
         return self.connection.executemany(query, parameters)
 
-    def load_accounts(self):
+    def load_accounts(self) -> set[Account]:
         account_rows = self.execute("""
             SELECT *
             FROM accounts
             """).fetchall()
 
-        accounts = []
+        accounts = set()
 
         for account in account_rows:
 
@@ -144,7 +144,7 @@ class Repository:
 
             assert primary is not None
 
-            accounts.append(
+            accounts.add(
                 Account(
                     id=id,
                     site=site,
@@ -214,10 +214,14 @@ class Repository:
             for row in history_rows
         }
 
-    def load_ignore(self):
-        pass
+    def load_ignore(self) -> set[str]:
+        ignore_rows = self.execute("""
+            SELECT word
+            FROM ignore
+            """)
+        return {word for word in ignore_rows}
 
-    def save_accounts(self, accounts: list[Account]):
+    def save_accounts(self, accounts: set[Account]) -> dict[str, int]:
 
         with self.connection:
 
@@ -234,7 +238,7 @@ class Repository:
 
         return {"Inserted": insert, "Updated": update}
 
-    def _save_account(self, account: Account):
+    def _save_account(self, account: Account) -> bool:
 
         site_id = self._save_site(account.site)
         primary_id = self._save_person(account.primary)
@@ -398,4 +402,9 @@ class Repository:
                 )
 
     def save_ignore(self, words_to_ignore: set[str]) -> None:
-        pass
+        with self.connection:
+            self.execute("""DELETE FROM ignore""")
+            self.executemany(
+                """INSERT INTO ignore (word) VALUES (?)""",
+                [(word,) for word in words_to_ignore],
+            )
