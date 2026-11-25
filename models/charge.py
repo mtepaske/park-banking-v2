@@ -2,22 +2,8 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
-from typing import Literal
 
 from services.date import get_date_from_str, get_str_from_date
-
-PARTICULARS = Literal["u", "m", "dd", "cc", "ca", "af", "di", "bp", "eg", "bf", "c"]
-# - Unmatched
-# - Matched
-# - Direct Deposit
-# - Credit Card
-# - Cash
-# - Annual Fees
-# - Discount
-# - Boart Parking
-# - Extra Guests
-# - Balance Brought Forward
-# - Custom
 
 
 class Charge:

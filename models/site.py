@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-BASE_RATE = Decimal(7550)
-AC_RATE = Decimal(150)
-SEWER_RATE = Decimal(300)
+from services.settings import get_setting
 
 
 class Site:
@@ -15,7 +13,7 @@ class Site:
         cabin: bool = True,
         ac: bool = True,
         sewer: bool = True,
-    ):
+    ) -> None:
 
         self.site_number = site_number
         self.cabin = cabin
@@ -32,7 +30,10 @@ class Site:
         )
 
     def calc_annual_fees(self) -> Decimal:
-        return BASE_RATE + int(self.ac) * AC_RATE + int(self.sewer) * SEWER_RATE
+        base_rate = Decimal(get_setting("annual_fees_base_rate"))
+        ac_rate = Decimal(get_setting("annual_fees_ac_rate"))
+        sewer_rate = Decimal(get_setting("annual_fees_sewer_rate"))
+        return base_rate + int(self.ac) * ac_rate + int(self.sewer) * sewer_rate
 
     def to_dict(self) -> dict[str, str]:
         return {

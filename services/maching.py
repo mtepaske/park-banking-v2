@@ -33,3 +33,10 @@ class Matcher:
                 self.unknown.add(word)
 
         return possibilities
+
+    @staticmethod
+    def assign_charge(
+        account: Account, charge: Charge, particualrs: str = "Direct Deposit"
+    ) -> None:
+        charge.particulars = particualrs
+        account.history.add(charge)

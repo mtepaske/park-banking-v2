@@ -15,8 +15,7 @@ class AppState:
 
         self.accounts: set[Account] = set()
         self.sites: set[Site] = set()
-        self.unmatched: set[Charge] = set()
-        self.matched: set[Charge] = set()
+        self.charges: dict[Charge, Account | None] = {}
         self.ignore: set[str] = set()
         self.unknown: set[str] = set()
 
@@ -40,36 +39,39 @@ class AppState:
         self.notify_changed()
 
     def clear_accounts(self):
-        self.accounts = set()
+        self.accounts.clear()
         self.notify_changed()
 
-    def add_unmatched(self, charge: Charge):
-        self.unmatched.add(charge)
+    def add_site(self, site: Site):
+        self.sites.add(site)
         self.notify_changed()
 
-    def remove_unmactched(self, charge: Charge):
-        self.unmatched.remove(charge)
+    def remove_site(self, site: Site):
+        self.sites.remove(site)
         self.notify_changed()
 
-    def clear_unmatched(self):
-        self.unmatched = set()
+    def clear_sites(self):
+        self.sites.clear()
         self.notify_changed()
 
-    def add_matched(self, charge: Charge):
-        self.matched.add(charge)
+    def add_charge(self, charge: Charge):
+        self.charges[charge] = None
         self.notify_changed()
 
-    def remove_matched(self, charge: Charge):
-        self.matched.remove(charge)
+    def remove_charge(self, charge: Charge):
+        self.charges.pop(charge)
         self.notify_changed()
 
-    def clear_matched(self):
-        self.macthed = set()
+    def clear_charges(self):
+        self.charges.clear()
         self.notify_changed()
 
-    def matched_charge(self, charge: Charge):
-        self.remove_unmactched(charge)
-        self.add_matched(charge)
+    def match_charge(self, charge: Charge, account: Account):
+        self.charges[charge] = account
+        self.notify_changed()
+
+    def remove_match(self, charge: Charge):
+        self.charges[charge] = None
         self.notify_changed()
 
     def add_ignore(self, word: str):
@@ -81,7 +83,7 @@ class AppState:
         self.notify_changed()
 
     def clear_ignore(self):
-        self.ignore = set()
+        self.ignore.clear()
         self.notify_changed()
 
     def add_unknown(self, word: str):
@@ -93,5 +95,5 @@ class AppState:
         self.notify_changed()
 
     def clear_unknown(self):
-        self.unknown = set()
+        self.unknown.clear()
         self.notify_changed()

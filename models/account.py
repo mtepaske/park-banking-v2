@@ -19,7 +19,7 @@ class Account:
         history: set[Charge] | None = None,
         active: bool = True,
         id: int | None = None,
-    ):
+    ) -> None:
 
         self.site = site
         self.primary = primary
@@ -91,7 +91,7 @@ class Account:
             id=id,
         )
 
-    def find_aliases(self):
+    def find_aliases(self) -> None:
         self.alaises = {str(self.site.site_number): "Site Number"}
 
         for alias in self.primary.aliases:
@@ -101,19 +101,19 @@ class Account:
             for alias in self.secondary.aliases:
                 self.alaises[alias] = "Secondary"
 
-    def change_site_number(self, site_number: int):
+    def change_site_number(self, site_number: int) -> None:
         self.site.site_number = site_number
         self.find_aliases()
 
-    def change_primary(self, person: Person):
+    def change_primary(self, person: Person) -> None:
         self.primary = person
         self.find_aliases()
 
-    def change_secondary(self, person: Person):
+    def change_secondary(self, person: Person) -> None:
         self.secondary = person
         self.find_aliases()
 
-    def add_charge(self, charge: Charge):
+    def add_charge(self, charge: Charge) -> None:
 
         self.history.add(charge)
 
