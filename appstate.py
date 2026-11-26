@@ -30,6 +30,7 @@ class AppState:
         for callback in self._listeners.copy():
             callback()
 
+    # Accounts
     def add_account(self, account: Account):
         self.accounts.add(account)
         self.notify_changed()
@@ -42,6 +43,16 @@ class AppState:
         self.accounts.clear()
         self.notify_changed()
 
+    def append_accounts(self, accounts: set[Account]):
+        for account in accounts:
+            self.accounts.add(account)
+        self.notify_changed()
+
+    def replace_accounts(self, accounts: set[Account]):
+        self.accounts = accounts
+        self.notify_changed()
+
+    # Sites
     def add_site(self, site: Site):
         self.sites.add(site)
         self.notify_changed()
@@ -54,6 +65,16 @@ class AppState:
         self.sites.clear()
         self.notify_changed()
 
+    def append_sites(self, sites: set[Site]):
+        for site in sites:
+            self.sites.add(site)
+        self.notify_changed()
+
+    def replace_sites(self, sites: set[Site]):
+        self.sites = sites
+        self.notify_changed()
+
+    # Charges
     def add_charge(self, charge: Charge):
         self.charges[charge] = None
         self.notify_changed()
@@ -74,6 +95,16 @@ class AppState:
         self.charges[charge] = None
         self.notify_changed()
 
+    def append_charges(self, charges: set[Charge]):
+        for charge in charges:
+            self.charges[charge] = None
+        self.notify_changed()
+
+    def replace_charges(self, charges: set[Charge]):
+        self.clear_charges()
+        self.append_charges(charges)
+
+    # Words to Ignore
     def add_ignore(self, word: str):
         self.ignore.add(word)
         self.notify_changed()
@@ -86,6 +117,7 @@ class AppState:
         self.ignore.clear()
         self.notify_changed()
 
+    # Unknown words
     def add_unknown(self, word: str):
         self.unknown.add(word)
         self.notify_changed()
