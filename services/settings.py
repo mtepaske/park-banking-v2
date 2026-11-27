@@ -28,10 +28,11 @@ DEFAULTS = {
 
 def load_settings() -> dict:
     """
-    Loads current settings from a json file. Creates a file with default settings if none found
+    Load a JSON file containing settings information
 
-    Returns:
-        A dictionary containing the setting information
+    Returns
+    -------
+    dict : A dictionary containing settings
     """
 
     # Sets the path for the file
@@ -48,10 +49,12 @@ def load_settings() -> dict:
 
 def save_settings(settings: dict) -> None:
     """
-    Saves updated settings into a json file
+    Save settings as a JSON file
 
-    Args:
-        settings: A dictionary of settings to change
+    Parameters
+    ----------
+    settings : dict
+        The settings to save
     """
 
     # Sets the path for the file
@@ -64,13 +67,16 @@ def save_settings(settings: dict) -> None:
 
 def get_setting(key: str) -> str:
     """
-    Gets a specific setting
+    Get the value of a specific setting
 
-    Args:
-        key: The dictionary key for the specific setting
+    Parameters
+    ----------
+    key : str
+        The setting to get
 
-    Returns:
-        A string containing the current setting
+    Returns
+    -------
+    str
     """
 
     return load_settings()[key]
@@ -78,11 +84,15 @@ def get_setting(key: str) -> str:
 
 def update_setting(key: str, value: str) -> None:
     """
-    Updates a setting
+    Update a specific setting
 
-    Args:
-        key: The key of the setting to update
-        value: The value to change it too
+    Parameters
+    ----------
+    key : str
+        The setting to update
+
+    value : str
+        The to update too
     """
 
     settings = load_settings()

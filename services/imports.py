@@ -10,6 +10,19 @@ import_folder = APP_DIRECTORY / get_setting("imports_folder")
 
 
 def import_statement(filename: str) -> set[Charge]:
+    """
+    Import a CSV file containing banking information
+
+    Parameters
+    ----------
+    filename : str
+        The name of the file to import
+
+    Returns
+    -------
+    set[Charge]
+    """
+
     with open(f"{import_folder / filename}", newline="", encoding="utf-8-sig") as file:
 
         charges = set()
@@ -26,24 +39,76 @@ def import_statement(filename: str) -> set[Charge]:
 
 
 def import_accounts(filename: str) -> set[Account]:
+    """
+    Import a CSV file containing account information
+
+    Parameters
+    ----------
+    filename : str
+        The name of the file to import
+
+    Returns
+    -------
+    set[Account]
+    """
+
     with open(f"{import_folder / filename}", newline="", encoding="utf-8-sig") as file:
         reader = csv.DictReader(file)
         return {Account.from_csv(row) for row in reader}
 
 
 def import_sites(filename: str) -> set[Site]:
+    """
+    Import a CSV file containing site information
+
+    Parameters
+    ----------
+    filename : str
+        The name of the file to import
+
+    Returns
+    -------
+    set[Site]
+    """
+
     with open(f"{import_folder / filename}", newline="", encoding="utf-8-sig") as file:
         reader = csv.DictReader(file)
         return {Site.from_csv(row) for row in reader}
 
 
 def import_ignore(filename: str) -> set[str]:
+    """
+    Import a CSV file containing words to ignore
+
+    Parameters
+    ----------
+    filename : str
+        The name of the file to import
+
+    Returns
+    -------
+    set[str]
+    """
+
     with open(f"{import_folder / filename}", newline="", encoding="utf-8-sig") as file:
         reader = csv.DictReader(file)
         return {word["Word"] for word in reader}
 
 
 def import_history(filename: str) -> set[Charge]:
+    """
+    Import a CSV file containing transaction history for an account
+
+    Parameters
+    ----------
+    filename : str
+        The name of the file to import
+
+    Returns
+    -------
+    set[Charge]
+    """
+
     with open(f"{import_folder / filename}", newline="", encoding="utf-8-sig") as file:
         reader = csv.DictReader(file)
         return {Charge.from_history_csv(row) for row in reader}

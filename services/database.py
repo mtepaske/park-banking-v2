@@ -8,16 +8,18 @@ from models.site import Site
 from services.date import get_date_from_str, get_str_from_date
 from services.settings import APP_DIRECTORY, get_setting
 
+# Get the folder that contains the database
 db_folder = APP_DIRECTORY / get_setting("db_path")
 db_folder.mkdir(parents=True, exist_ok=True)
 
 
 def connect() -> sqlite3.Connection:
     """
-    Establish the database connection
+    Establish a database connection
 
-    Returns:
-        The database connection
+    Returns
+    -------
+    sqlite3.Connection
     """
 
     db_path = db_folder / "database.db"
@@ -32,8 +34,10 @@ def disconnect(connection: sqlite3.Connection) -> None:
     """
     Close a database connection
 
-    Args:
-        connection: The connection to close
+    Parameters
+    ----------
+    connection : sqlite3.Connection
+        The connection instance to close
     """
 
     connection.close()
@@ -41,10 +45,12 @@ def disconnect(connection: sqlite3.Connection) -> None:
 
 def initialise_database(connection: sqlite3.Connection) -> None:
     """
-    Initialise an empty database with empty tables
+    Create the database tables
 
-    Args:
-        connection: The database connection
+    Parameters
+    ----------
+    connection : sqlite3.Connection
+        The connection instance
     """
 
     with connection:
@@ -115,24 +121,81 @@ def initialise_database(connection: sqlite3.Connection) -> None:
 
 
 class Repository:
+    """
+    Manages database queries
+
+    Attributes
+    ----------
+    connection : The connection to the database
+    """
 
     def __init__(self, connection: sqlite3.Connection) -> None:
+        """
+        Initialises the class
+
+        Parameters
+        ----------
+        connection : sqlite3.Connection
+            The connection to the database
+        """
+
         self.connection = connection
 
     def execute(self, query: str, parameters: tuple = ()) -> sqlite3.Cursor:
+        """
+        Execute a query
+
+        Parameters
+        ----------
+        query : str
+            The query to execute
+
+        parameters : tuple
+            The parameters of the query
+
+        Returns
+        -------
+        sqlite3.Cursor
+            A database cursor of the query
+        """
+
         return self.connection.execute(query, parameters)
 
     def executemany(self, query: str, parameters: list[tuple]) -> sqlite3.Cursor:
+        """
+        Execute multiple queries
+
+        Parameters
+        ----------
+        query : str
+            The query to execute
+
+        parameters : list[tuple]
+            The parameters of the queries
+
+        Returns
+        -------
+        sqlite3.Cursor
+            A cursor of the query
+        """
+
         return self.connection.executemany(query, parameters)
 
     def load_accounts(self) -> set[Account]:
+        """
+        Load all accounts from the database
+
+        Returns
+        -------
+        set[Account]
+        """
+
         account_rows = self.execute("""
             SELECT *
             FROM accounts
             """).fetchall()
 
         accounts = set()
-
         for account in account_rows:
 
             id = account["id"]
@@ -158,6 +221,19 @@ class Repository:
         return accounts
 
     def load_site(self, id: int) -> Site:
+        """
+        Load a site from the database
+
+        Parameters
+        ----------
+        id : int
+            The database id of the site to load
+
+        Returns
+        -------
+        Site
+        """
+
         _, cabin, ac, sewer = self.execute(
             """
             SELECT *
@@ -166,6 +242,7 @@ class Repository:
             """,
             (id,),
         ).fetchone()
+
         return Site(
             site_number=id,
             cabin=bool(cabin),
@@ -174,6 +251,18 @@ class Repository:
         )
 
     def load_person(self, id: int | None) -> Person | None:
+        """
+        Load a person from the database
+
+        Parameters
+        ----------
+        id : int | None
+            The database id of the person to load. None if there is no person to load
+
+        Returns
+        -------
+        Person | None
+        """
 
         if id is None:
             return None
@@ -186,6 +275,7 @@ class Repository:
             """,
             (id,),
         ).fetchone()
+
         return Person(
             id=id,
             name=name,
@@ -195,6 +285,19 @@ class Repository:
         )
 
     def load_history(self, account_id: int) -> set[Charge]:
+        """
+        Load the transaction history of an account
+
+        Parameters
+        ----------
+        account_id : int
+            The id of the account to load history for
+
+        Returns
+        -------
+        set[Charge]
+        """
+
         history_rows = self.execute(
             """
             SELECT *
@@ -203,6 +306,7 @@ class Repository:
         """,
             (account_id,),
         ).fetchall()
+
         return {
             Charge(
                 date=get_date_from_str(row["date"]),
@@ -215,6 +319,14 @@ class Repository:
         }
 
     def load_ignore(self) -> set[str]:
+        """
+        Load all the words to ignore
+
+        Returns
+        -------
+        set[str]
+        """
+
         ignore_rows = self.execute("""
             SELECT word
             FROM ignore
@@ -222,6 +334,18 @@ class Repository:
         return {word for word in ignore_rows}
 
     def save_accounts(self, accounts: set[Account]) -> dict[str, int]:
+        """
+        Save accounts to the database
+
+        Parameters
+        ----------
+        accounts : set[Account]
+           The accounts to save
+
+        Returns
+        -------
+        dict[str, int] : The amount of accounts inserted/updated
+        """
 
         with self.connection:
 
@@ -239,6 +363,18 @@ class Repository:
         return {"Inserted": insert, "Updated": update}
 
     def _save_account(self, account: Account) -> bool:
+        """
+        Save a single account to the database
+
+        Parameters
+        ----------
+        account : Account
+            The account to save
+
+        Returns
+        -------
+        bool : True if inserted. False if updated
+        """
 
         site_id = self._save_site(account.site)
         primary_id = self._save_person(account.primary)
@@ -285,6 +421,19 @@ class Repository:
             return False
 
     def _save_site(self, site: Site) -> int:
+        """
+        Save a site to the database
+
+        Parameters
+        ----------
+        site : Site
+            The site to save
+
+        Returns
+        -------
+        int : The id of the saved site
+        """
+
         self.execute(
             """
             INSERT INTO sites (
@@ -306,6 +455,18 @@ class Repository:
         return site.site_number
 
     def _save_person(self, person: Person | None) -> int | None:
+        """
+        Save a person to the database
+
+        Parameters
+        ----------
+        person : Person | None
+           The person to save
+
+        Returns
+        -------
+        int | None : The id of the saved person. None if no person was saved
+        """
 
         if person is None:
             return None
@@ -330,11 +491,9 @@ class Repository:
             )
             person.id = cursor.lastrowid
 
-            assert person.id is not None
             return person.id
 
         else:
-
             self.execute(
                 """
                 UPDATE people
@@ -352,9 +511,19 @@ class Repository:
                     person.id,
                 ),
             )
+
             return person.id
 
     def _save_history(self, account: Account) -> None:
+        """
+        Save the transaction hsitory of an account
+
+        Parameters
+        ----------
+        account : Account
+            The account to save the history of
+        """
+
         assert account.id is not None
         for charge in account.history:
             if charge.id is None:
@@ -380,7 +549,6 @@ class Repository:
                 charge.id = cursor.lastrowid
 
             else:
-
                 self.execute(
                     """
                     UPDATE charges
@@ -402,6 +570,15 @@ class Repository:
                 )
 
     def save_ignore(self, words_to_ignore: set[str]) -> None:
+        """
+        Save words to ignore to the database
+
+        Parameters
+        ----------
+        words_to_ignore : set[str]
+            The words to save
+        """
+
         with self.connection:
             self.execute("""DELETE FROM ignore""")
             self.executemany(

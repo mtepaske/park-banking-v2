@@ -5,10 +5,11 @@ from zoneinfo import ZoneInfo
 
 def get_today() -> date:
     """
-    Gets todays date
+    Get todays date
 
-    Returns:
-        Todays date
+    Returns
+    -------
+    date
     """
 
     return dt.now(ZoneInfo("Australia/Melbourne")).date()
@@ -16,13 +17,16 @@ def get_today() -> date:
 
 def start_of_fy(day: date | None = None) -> date:
     """
-    Finds the start of the fincial year
+    Get the start of the fincial year
 
-    Args:
-        day: The date
+    Parameters
+    ----------
+    day : date | None
+        The date to find the fincial year for. Defaults to todays date
 
-    Returns:
-        The start of the FY
+    Returns
+    -------
+    date
     """
 
     if day is None:
@@ -36,13 +40,16 @@ def start_of_fy(day: date | None = None) -> date:
 
 def end_of_fy(day: date | None = None) -> date:
     """
-    Finds the end of the fincial year
+    Get the end of the fincial year
 
-    Args:
-        day: The date
+    Parameters
+    ----------
+    day : date | None
+        The date to find the fincial year for. Defaults to todays date
 
-    Returns:
-        The end of the FY
+    Returns
+    -------
+    date
     """
 
     if day is None:
@@ -56,13 +63,16 @@ def end_of_fy(day: date | None = None) -> date:
 
 def get_date_from_str(date: str) -> date:
     """
-    Converts from a string to a date
+    Convert a string to a date object
 
-    Args:
-        date: The date to convert
+    Parameters
+    ----------
+    date : str
+        The date string to convert
 
-    Returns:
-        The date as a date object
+    Returns
+    -------
+    date
     """
 
     try:
@@ -78,4 +88,17 @@ def get_date_from_str(date: str) -> date:
 
 
 def get_str_from_date(date: date) -> str:
+    """
+    Convert a date object to a string in ISO format
+
+    Parameters
+    ----------
+    date : date
+        The date to convert
+
+    Returns
+    -------
+    str
+    """
+
     return date.strftime("%Y-%m-%d")

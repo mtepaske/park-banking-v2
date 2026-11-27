@@ -7,8 +7,28 @@ from services.database import Repository
 
 
 class AppState:
+    """
+    Tracks loaded data throuout the application
+
+    Attributes
+    ----------
+    repo : The database repository used to update and select infromation
+    accounts : The loaded accounts
+    sites : The loaded sites
+    charges : The loaded charges
+    ignore : The loaded words to ignore
+    unknown : Unknown words found during matching
+    """
 
     def __init__(self, repo: Repository) -> None:
+        """
+        Initialises the class
+
+        Parameters
+        ----------
+        repo : Repository
+           The database repository used to update and select information
+        """
 
         self.repo = repo
         self._listeners: list[Callable] = []
@@ -20,13 +40,33 @@ class AppState:
         self.unknown: set[str] = set()
 
     def subscribe(self, callback):
+        """
+        Used to subscribe to updates in appstate. For reactive functions and UI objects
+
+        Parameters
+        ----------
+        callback : Callback
+            The function to update
+        """
+
         self._listeners.append(callback)
 
     def unsubscribe(self, callback):
+        """
+        Used to unsubscribe from updates in appstate
+
+        Parameters
+        ----------
+        callback :
+            The function to unsubscribe
+        """
+
         if callback in self._listeners:
             self._listeners.remove(callback)
 
     def notify_changed(self):
+        """Notify all subscribed UI elements of an update"""
+
         for callback in self._listeners.copy():
             callback()
 

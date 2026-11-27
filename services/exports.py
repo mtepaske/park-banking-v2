@@ -10,7 +10,19 @@ export_folder = APP_DIRECTORY / get_setting("exports_folder")
 export_folder.mkdir(parents=True, exist_ok=True)
 
 
-def export_accounts_to_csv(accounts: list[Account], filename: str) -> None:
+def export_accounts_to_csv(accounts: set[Account], filename: str) -> None:
+    """
+    Export account information to a CSV file
+
+    Parameters
+    ----------
+    accounts : set[Account]
+        The account to export
+
+    filename : str
+        The name of the file to export to
+    """
+
     fieldnames = [
         "ID",
         "Site Number",
@@ -47,6 +59,18 @@ def export_accounts_to_csv(accounts: list[Account], filename: str) -> None:
 
 
 def export_sites(sites: set[Site], filename: str) -> None:
+    """
+    Export site information to a CSV file
+
+    Parameters
+    ----------
+    sites : set[Site]
+        The sites to export
+
+    filename : str
+        The name of the file to export to
+    """
+
     fieldnames = ["Site Number", "Cabin", "AC", "Sewer"]
 
     with open(
@@ -61,6 +85,18 @@ def export_sites(sites: set[Site], filename: str) -> None:
 
 
 def export_history(history: set[Charge], filename: str) -> None:
+    """
+    Export account history as a CSV file
+
+    Parameters
+    ----------
+    history : set[Charge]
+        The history to export
+
+    filename : str
+        The name of the file to export to
+    """
+
     fieldnames = ["Date", "Description", "Debit", "Credit"]
 
     with open(
