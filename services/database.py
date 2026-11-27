@@ -13,13 +13,6 @@ db_folder.mkdir(parents=True, exist_ok=True)
 
 
 def connect() -> sqlite3.Connection:
-    """
-    Establish the database connection
-
-    Returns:
-        The database connection
-    """
-
     db_path = db_folder / "database.db"
     connection = sqlite3.connect(db_path)
     connection.execute("PRAGMA foreign_keys = ON")
@@ -29,24 +22,10 @@ def connect() -> sqlite3.Connection:
 
 
 def disconnect(connection: sqlite3.Connection) -> None:
-    """
-    Close a database connection
-
-    Args:
-        connection: The connection to close
-    """
-
     connection.close()
 
 
 def initialise_database(connection: sqlite3.Connection) -> None:
-    """
-    Initialise an empty database with empty tables
-
-    Args:
-        connection: The database connection
-    """
-
     with connection:
 
         # Accounts table

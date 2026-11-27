@@ -27,13 +27,6 @@ DEFAULTS = {
 
 
 def load_settings() -> dict:
-    """
-    Loads current settings from a json file. Creates a file with default settings if none found
-
-    Returns:
-        A dictionary containing the setting information
-    """
-
     # Sets the path for the file
     SETTINGS_PATH.parent.mkdir(parents=True, exist_ok=True)
 
@@ -47,13 +40,6 @@ def load_settings() -> dict:
 
 
 def save_settings(settings: dict) -> None:
-    """
-    Saves updated settings into a json file
-
-    Args:
-        settings: A dictionary of settings to change
-    """
-
     # Sets the path for the file
     SETTINGS_PATH.parent.mkdir(parents=True, exist_ok=True)
 
@@ -63,28 +49,10 @@ def save_settings(settings: dict) -> None:
 
 
 def get_setting(key: str) -> str:
-    """
-    Gets a specific setting
-
-    Args:
-        key: The dictionary key for the specific setting
-
-    Returns:
-        A string containing the current setting
-    """
-
     return load_settings()[key]
 
 
 def update_setting(key: str, value: str) -> None:
-    """
-    Updates a setting
-
-    Args:
-        key: The key of the setting to update
-        value: The value to change it too
-    """
-
     settings = load_settings()
     settings[key] = value
     save_settings(settings)

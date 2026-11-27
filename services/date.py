@@ -4,27 +4,10 @@ from zoneinfo import ZoneInfo
 
 
 def get_today() -> date:
-    """
-    Gets todays date
-
-    Returns:
-        Todays date
-    """
-
     return dt.now(ZoneInfo("Australia/Melbourne")).date()
 
 
 def start_of_fy(day: date | None = None) -> date:
-    """
-    Finds the start of the fincial year
-
-    Args:
-        day: The date
-
-    Returns:
-        The start of the FY
-    """
-
     if day is None:
         day = get_today()
 
@@ -35,16 +18,6 @@ def start_of_fy(day: date | None = None) -> date:
 
 
 def end_of_fy(day: date | None = None) -> date:
-    """
-    Finds the end of the fincial year
-
-    Args:
-        day: The date
-
-    Returns:
-        The end of the FY
-    """
-
     if day is None:
         day = get_today()
 
@@ -55,16 +28,6 @@ def end_of_fy(day: date | None = None) -> date:
 
 
 def get_date_from_str(date: str) -> date:
-    """
-    Converts from a string to a date
-
-    Args:
-        date: The date to convert
-
-    Returns:
-        The date as a date object
-    """
-
     try:
         parsed_date = dt.strptime(date, "%d %b %y").astimezone(
             ZoneInfo("Australia/Melbourne")
