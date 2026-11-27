@@ -10,6 +10,20 @@ from services.date import start_of_fy
 
 
 class Account:
+    """
+    Tracks status of an account
+
+    Attributes
+    ----------
+    site : The Site associated with the account
+    primary : The Person who is the primary site holder
+    secondary : The Person who is the secondary site holder
+    aliases : The aliases used to match charges to
+    active : The active status of the account
+    id : The database id of the account
+    history : The transaction history of the account
+    balance : The Balance associated with the account
+    """
 
     def __init__(
         self,
@@ -20,6 +34,29 @@ class Account:
         active: bool = True,
         id: int | None = None,
     ) -> None:
+        """
+        Initialises the class
+
+        Parameters
+        ----------
+        site : Site
+            The Site associated with the account
+
+        primary : Person
+            The primary site holder of the account
+
+        secondary : Person | None
+            The secondary site holder of the account. Defaults to None
+
+        history : set[Charge] | None
+            The fincanical history of the account. Defaults to None
+
+        active : bool
+            The active status of the account. Defaults to None
+
+        id : int | None
+            The database id of the account
+        """
 
         self.site = site
         self.primary = primary
@@ -32,6 +69,7 @@ class Account:
             history = set()
         self.history = history
 
+        # Create the Balance class to track account balance
         balance = Decimal(0)
         for charge in self.history:
             balance += charge.amount
@@ -39,16 +77,34 @@ class Account:
 
     @property
     def total(self) -> Decimal:
-        return self.balance.balance
+        """Gets the total balance of the account"""
+
+        return self.balance.total_balance
 
     @classmethod
     def from_csv(cls, row: dict[str, str]) -> Account:
+        """
+        Construct an Account from the row of a CSV file
+
+        Parameters
+        ----------
+        row : dict[str, str]
+            The row of the CSV file containing account information
+
+        Returns
+        -------
+        Account
+        """
+
+        # Construct the Site
         site = Site(
             site_number=int(row["Site Number"]),
             cabin=bool(int(row["Cabin"])),
             ac=bool(int(row["AC"])),
             sewer=bool(int(row["Sewer"])),
         )
+
+        # Construct the primary site holder
         primary = Person(
             name=row["Primary Site Holder"],
             aliases={alias for alias in row["Primary Aliases"].split(",")},
@@ -56,6 +112,8 @@ class Account:
             email=row["Primary Email"],
             id=int(row["Primary ID"]),
         )
+
+        # Construct the secondary site holder
         if row["Secondary Site Holder"] != "":
             secondary = Person(
                 name=row["Secondary Site Holder"],
@@ -66,8 +124,11 @@ class Account:
             )
         else:
             secondary = None
+
         active = bool(int(row["Active"]))
         id = int(row["ID"])
+
+        # Generate a default charge history
         history = {
             Charge(
                 date=start_of_fy(),
@@ -82,6 +143,8 @@ class Account:
                 particulars="af",
             ),
         }
+
+        # Return the account
         return Account(
             site=site,
             primary=primary,
@@ -92,38 +155,85 @@ class Account:
         )
 
     def find_aliases(self) -> None:
+        """Collect the aliases of the site holders and the site number"""
+
+        # Add the site number
         self.alaises = {str(self.site.site_number): "Site Number"}
 
+        # Add the primary aliases
         for alias in self.primary.aliases:
             self.aliases[alias] = "Primary"
 
+        # Add the secondary aliases
         if self.secondary is not None:
             for alias in self.secondary.aliases:
                 self.alaises[alias] = "Secondary"
 
-    def change_site_number(self, site_number: int) -> None:
-        self.site.site_number = site_number
+    def change_site(self, site: Site) -> None:
+        """
+        Change the Site associated with the Account
+
+        Parameters
+        ----------
+        site : Site
+            The new Site
+        """
+
+        self.site = site
         self.find_aliases()
 
     def change_primary(self, person: Person) -> None:
+        """
+        Change the primary site holder
+
+        Parameters
+        ----------
+        person : Person
+            The new primary site holder
+        """
+
         self.primary = person
         self.find_aliases()
 
     def change_secondary(self, person: Person) -> None:
+        """
+        Change the secondary site holder
+
+        Parameters
+        ----------
+        person : Person
+            The new secondary site holder
+        """
+
         self.secondary = person
         self.find_aliases()
 
     def add_charge(self, charge: Charge) -> None:
+        """
+        Add a charge to the history
+
+        Parameters
+        ----------
+        charge : Charge
+            The Charge to add
+        """
 
         self.history.add(charge)
 
         if charge.amount > 0:
             self.balance.add_payment(charge)
-
         else:
             self.balance.add_fee(charge)
 
     def to_dict(self) -> dict[str, str]:
+        """
+        Generate a dictionary to represent this instance
+
+        Returns
+        -------
+        dict[str, str]
+        """
+
         return {
             "ID": str(self.id),
             "Site Number": str(self.site.site_number),
@@ -135,7 +245,7 @@ class Account:
             "Remianing From This Fincial Year": str(self.balance.remaining),
             "Outstanding From Previous Fincial Years": str(self.balance.outstanding),
             "Credit": str(self.balance.credit),
-            "Total Balance": str(self.balance.balance),
+            "Total Balance": str(self.balance.total_balance),
             "Active": str(int(self.active)),
             "Primary ID": str(self.primary.id),
             "Primary Aliases": ",".join(self.primary.aliases),
